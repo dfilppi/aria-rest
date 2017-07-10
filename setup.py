@@ -10,11 +10,12 @@ setup(
         'aria_rest'
     ],
     entry_points = {
-      'console_scripts' : ['aria-rest=onap_aria_rest.rest:main']
+      'console_scripts' : ['aria-rest=aria_rest.rest:main']
     },
     license='LICENSE',
     description='Aria REST API for ONAP',
     install_requires=[
-        'Flask==0.12.2'
+        'Flask==0.12.2',
+        'flask-autodoc==0.1.2'
     ]
 )
