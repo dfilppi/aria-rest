@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_autodoc.autodoc import Autodoc
 from aria import install_aria_extensions
 from aria.cli.core import aria
+from aria.cli import utils
 from aria.exceptions import AriaException
 from aria.core import Core
 from aria.cli import service_template_utils
@@ -17,6 +18,7 @@ version_id = "0.1"
 route_base = "/api/" + version_id + "/"
 app = Flask("onap-aria-rest")
 auto = Autodoc(app)
+execution_state = {}
 
 def main():
   install_aria_extensions()
@@ -347,10 +349,11 @@ def start_execution(service_id, workflow_name, model_storage, resource_storage, 
                           task_max_attempts =  task_max_attempts,
                           task_retry_interval = task_retry_interval)
 
-  tname = '{}_{}'.format(service.name,workflow_name)
+  tname = '{}_{}_{}'.format(service.name, workflow_name, runner.execution_id)
   thread = threading.ExceptionThread(target = runner.execute,
                                      name = tname)
   thread.start()
+  execution_state[str(runner.execution_id)]=[runner, thread]
   return jsonify({"id":runner.execution_id}), 202
 
 ## resume execution
@@ -375,18 +378,53 @@ def resume_execution(execution_id, model_storage, resource_storage, plugin_manag
                           task_max_attempts =  task_max_attempts,
                           task_retry_interval = task_retry_interval)
 
-  tname = '{}_{}'.format(service.name,workflow_name)
+  tname = '{}_{}_{}'.format(service.name, workflow_name, runner.execution_id)
   thread = threading.ExceptionThread(target = runner.execute,
                                      name = tname,
                                      daemon = True )
   execution_thread.start()
+  execution_state[str(runner.execution_id)]=[runner, thread]
   return jsonify({"id":runner.execution_id}), 202
 
 ## cancel execution
 @app.route(route_base + "executions/<execution_id>", methods = ['DELETE'])
-def cancel_execution(execution_id):
-  return "not implemented",501
+@auto.doc()
+@aria.pass_logger
+def cancel_execution(execution_id, logger):
 
+  logger.info("cancelling execution {}".format(execution_id))
+  body = request.json
+
+  try:
+    execution = model_storage.execution.get(execution_id)
+  except:
+    return "Execution {} not found".format(execution_id), 404
+
+  if execution.status != execution.status.PENDING and
+     execution.status != execution.status.STARTED:
+     return "Cancel ignored.  Execution state = {}".format(execution.status), 200
+
+  if not execution_id in execution_state:
+    logger.error("id {} not found".format(execution_id))
+    return "execution id {} not found".format(execution_id), 400
+
+  einfo = execution_state[execution_id]
+  runner = einfo[0]
+  thread = einfo[1]
+  timeout = 30  # seconds to wait for thread death
+  if 'timeout' in body:
+    timeout = body['timeout']
+  
+  runner.cancel()
+  while thread.is_alive() and timeout > 0:
+    thread.join(1)
+    if not thread.is_alive():
+      return "execution {} cancelled".format(execution_id), 200
+    timeout = timeout - 1
+  if timeout == 0:
+    return "execution cancel timed out", 500
+  return "execution {} cancelled".format(execution_id), 200
+  
 
 if __name__ == "__main__":
   app.run(threaded = True)
