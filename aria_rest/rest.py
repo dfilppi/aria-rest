@@ -349,9 +349,8 @@ def start_execution(service_id, workflow_name, model_storage, resource_storage, 
 
   tname = '{}_{}'.format(service.name,workflow_name)
   thread = threading.ExceptionThread(target = runner.execute,
-                                     name = tname,
-                                     daemon = True )
-  execution_thread.start()
+                                     name = tname)
+  thread.start()
   return jsonify({"id":runner.execution_id}), 202
 
 ## resume execution
