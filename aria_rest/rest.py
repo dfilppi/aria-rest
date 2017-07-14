@@ -18,7 +18,7 @@ version_id = "0.1"
 route_base = "/api/" + version_id + "/"
 app = Flask("onap-aria-rest")
 auto = Autodoc(app)
-execution_state = {}
+execution_state = util.SafeDict
 
 def main():
   install_aria_extensions()
