@@ -47,6 +47,9 @@ def index():
 @aria.pass_logger
 def install_template(template_name, model_storage, resource_storage,
                      plugin_manager, logger):
+    """
+    installs a template in Aria storage
+    """
     body = request.json
 
     # Check body
@@ -88,6 +91,9 @@ def install_template(template_name, model_storage, resource_storage,
 @aria.pass_plugin_manager
 @aria.pass_logger
 def validate_template(model_storage, resource_storage, plugin_manager, logger):
+    """
+    Validates a TOSCA template
+    """
     body = request.json
 
     # Check body
@@ -112,9 +118,8 @@ def validate_template(model_storage, resource_storage, plugin_manager, logger):
     logger.info('Service template {} validated'.format(service_template_path))
     return "", 200
 
+
 # delete template
-
-
 @app.route(route_base + "templates/<template_id>", methods=['DELETE'])
 @auto.doc()
 @aria.pass_model_storage
@@ -127,6 +132,9 @@ def delete_template(
         resource_storage,
         plugin_manager,
         logger):
+    """
+    Deletes a template from Aria storage
+    """
 
     logger.info('Deleting service template {}'.format(template_id))
     core = Core(model_storage, resource_storage, plugin_manager)
@@ -142,14 +150,16 @@ def delete_template(
     logger.info('Service template {} deleted'.format(template_id))
     return "", 200
 
+
 # list templates
-
-
 @app.route(route_base + "templates", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def list_templates(model_storage, logger):
+    """
+    Lists templates installed in Aria storage
+    """
     list = model_storage.service_template.list()
     templates = []
     for item in list:
@@ -159,12 +169,16 @@ def list_templates(model_storage, logger):
                           })
     return jsonify(templates)
 
+
 # list nodes
 @app.route(route_base + "templates/<template_id>/nodes", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
-def list_nodes_by_template(template_id, model_storage,logger):
+def list_nodes_by_template(template_id, model_storage, logger):
+    """
+    Lists node templates in specified Aria template
+    """
     service_template = model_storage.service_template.get(template_id)
     filters = dict(service_template=service_template)
     nodes = model_storage.node_template.list(filters=filters)
@@ -172,13 +186,14 @@ def list_nodes_by_template(template_id, model_storage,logger):
 
     for node in nodes:
         nodelist.append({
-            "id":node.id,
-            "name":node.name,
-            "description":node.description,
-            "service_template_id":service_template.id,
-            "type_name":node.type_name
+            "id": node.id,
+            "name": node.name,
+            "description": node.description,
+            "service_template_id": service_template.id,
+            "type_name": node.type_name
         })
     return jsonify(nodelist), 200
+
 
 # show node details
 @app.route(route_base + "nodes/<node_id>", methods=['GET'])
@@ -186,6 +201,9 @@ def list_nodes_by_template(template_id, model_storage,logger):
 @aria.pass_model_storage
 @aria.pass_logger
 def get_node(node_id, model_storage, logger):
+    """
+    Get node details
+    """
     node_template = model_storage.node_template.get(node_id)
     service_template = model_storage.service_template.get_by_name(
         node_template.service_template_name)
@@ -201,14 +219,16 @@ def get_node(node_id, model_storage, logger):
 # SERVICES
 ###
 
+
 # list services
-
-
 @app.route(route_base + "services", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def list_services(model_storage, logger):
+    """
+    Lists all services
+    """
     services_list = model_storage.service.list()
     outlist = []
     for service in services_list:
@@ -220,21 +240,25 @@ def list_services(model_storage, logger):
                         "updated": service.updated_at})
     return jsonify(outlist), 200
 
+
 # show service
-
-
 @app.route(route_base + "services/<service_id>", methods=['GET'])
 def show_service(service_id):
+    """
+    Returns details for specified servie
+    """
     return "not implemented", 501
 
+
 # get service outputs
-
-
 @app.route(route_base + "services/<service_id>/outputs", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def get_service_outputs(service_id, model_storage, logger):
+    """
+    Gets outputs for specified service
+    """
     service = model_storage.service.get(service_id)
     outlist = []
     for output_name, output in service.outputs.iteritems():
@@ -242,14 +266,16 @@ def get_service_outputs(service_id, model_storage, logger):
                         "value": output.value})
     return jsonify(outlist)
 
+
 # get service inputs
-
-
 @app.route(route_base + "services/<service_id>/inputs", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def get_service_inputs(service_id, model_storage, logger):
+    """
+    Gets inputs for specified service
+    """
     service = model_storage.service.get(service_id)
     outlist = []
     for input_name, input in service.inputs.iteritems():
@@ -257,9 +283,8 @@ def get_service_inputs(service_id, model_storage, logger):
                         "value": input.value})
     return jsonify(outlist)
 
+
 # create service
-
-
 @app.route(route_base + "templates/<template_id>/services/<service_name>",
            methods=['POST'])
 @auto.doc()
@@ -269,12 +294,15 @@ def get_service_inputs(service_id, model_storage, logger):
 @aria.pass_logger
 def create_service(template_id, service_name, model_storage, resource_storage,
                    plugin_manager, logger):
+    """
+    Creates a service from the specified service template
+    """
     body = request.json
     inputs = {}
     if 'inputs' in body:
         inputs = body['inputs']
     core = Core(model_storage, resource_storage, plugin_manager)
-    service = core.create_service( template_id, inputs, service_name)
+    service = core.create_service(template_id, inputs, service_name)
 
     logger.info("service {} created".format(service.name))
     return "service {} created".format(service.name), 200
@@ -293,6 +321,9 @@ def delete_service(
         resource_storage,
         plugin_manager,
         logger):
+    """
+    Deletes the specified servi e
+    """
     service = model_storage.service.get(service_id)
     core = Core(model_storage, resource_storage, plugin_manager)
     core.delete_service(service_id, force=True)
@@ -303,12 +334,16 @@ def delete_service(
 # WORKFLOWS
 ###
 
+
 # list workflows
 @app.route(route_base + "services/<service_id>/workflows", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def list_workflows(service_id, model_storage, logger):
+    """
+    Lists all defined user workflows for the specified service
+    """
     service = model_storage.service.get(service_id)
     workflows = service.workflows.itervalues()
     outlist = []
@@ -322,12 +357,16 @@ def list_workflows(service_id, model_storage, logger):
     route_base +
     "services/<service_id>/workflow/<workflow_name>",
     methods=['GET'])
-def show_workflows(service_name, workflow_name):
+def show_workflow(service_name, workflow_name):
+    """
+    Returns details of specified workflow
+    """
     return "not implemented", 501
 
 ###
 # EXECUTIONS
 ###
+
 
 # list all executions
 @app.route(route_base + "executions", methods=['GET'])
@@ -335,6 +374,9 @@ def show_workflows(service_name, workflow_name):
 @aria.pass_model_storage
 @aria.pass_logger
 def list_executions(model_storage, logger):
+    """
+    Return all executions
+    """
     elist = model_storage.execution.list()
     outlist = []
     for execution in elist:
@@ -346,14 +388,16 @@ def list_executions(model_storage, logger):
              "status": execution.status})
     return jsonify(outlist), 200
 
+
 # list executions for service
-
-
 @app.route(route_base + "services/<service_id>/executions", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def list_service_executions(service_id, model_storage, logger):
+    """
+    Return all executions for specified service
+    """
     service = model_storage.service.get(service_id)
     elist = model_storage.execution.list(filters=dict(service=service))
     outlist = []
@@ -366,15 +410,16 @@ def list_service_executions(service_id, model_storage, logger):
              "status": execution.status})
     return jsonify(outlist), 200
 
+
 # show execution
-
-
 @app.route(route_base + "executions/<execution_id>", methods=['GET'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def show_execution(execution_id, model_storage, logger):
-
+    """
+    Return details of specified execution
+    """
     try:
         execution = model_storage.execution.get(execution_id)
     except BaseException:
@@ -406,6 +451,9 @@ def start_execution(
         resource_storage,
         plugin_manager,
         logger):
+    """
+    Start an execution for the specified service
+    """
     body = request.json
     executor = DryExecutor(
         ) if 'executor' in body and body['executor'] == 'dry' else None
@@ -432,9 +480,8 @@ def start_execution(
     execution_state[str(runner.execution_id)] = [runner, thread]
     return jsonify({"id": runner.execution_id}), 202
 
+
 # resume execution
-
-
 @app.route(route_base + "executions/<execution_id>", methods=['POST'])
 @auto.doc()
 @aria.pass_model_storage
@@ -447,6 +494,9 @@ def resume_execution(
         resource_storage,
         plugin_manager,
         logger):
+    """
+    Resume the specified execution
+    """
     body = request.json
     execution = model_storage.execution.get(execution_id)
     if execution.status != execution.status.CANCELLED:
@@ -470,15 +520,16 @@ def resume_execution(
     execution_state[str(runner.execution_id)] = [runner, thread]
     return jsonify({"id": runner.execution_id}), 202
 
+
 # cancel execution
-
-
 @app.route(route_base + "executions/<execution_id>", methods=['DELETE'])
 @auto.doc()
 @aria.pass_model_storage
 @aria.pass_logger
 def cancel_execution(execution_id, model_storage, logger):
-
+    """
+    Cancel the specified execution
+    """
     logger.info("cancelling execution {}".format(execution_id))
     body = request.json
 
