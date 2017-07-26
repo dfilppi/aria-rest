@@ -16,6 +16,7 @@ setup(
     description='Aria REST API for ONAP',
     install_requires=[
         'Flask==0.12.2',
-        'flask-autodoc==0.1.2'
+        'flask-autodoc==0.1.2',
+        'apache-ariatosca==0.1.0'
     ]
 )
