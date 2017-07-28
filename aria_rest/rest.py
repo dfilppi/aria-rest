@@ -1,7 +1,10 @@
 import os
+from cStringIO import StringIO
 from flask import Flask, render_template, request, jsonify
 from flask_autodoc.autodoc import Autodoc
 from aria import install_aria_extensions
+from aria.parser import consumption
+from aria.utils import formatting, collections
 from aria.cli.core import aria
 from aria.cli import utils
 from aria.exceptions import ParsingError, DependentServicesError
@@ -149,6 +152,19 @@ def delete_template(
 
     logger.info('Service template {} deleted'.format(template_id))
     return "", 200
+
+
+# get template json
+@app.route(route_base + "templates/<template_id>/json", methods=['GET'])
+@auto.doc()
+@aria.pass_model_storage
+@aria.pass_logger
+def get_template_json(template_id, model_storage, logger):
+    """ get JSON representation of template """
+    template = model_storage.service_template.get(template_id)
+    consumption.ConsumptionContext()
+    body = formatting.json_dumps(collections.prune(template.as_raw))
+    return body
 
 
 # list templates
