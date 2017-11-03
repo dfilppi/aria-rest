@@ -73,6 +73,22 @@ def install_template(template_name, model_storage, resource_storage,
 
     """
     installs a template in Aria storage
+
+    3 modes possible:
+
+      1. PUT JSON body which points to a CSAR URL.  Content-type must be
+         application/json. PUT data is a JSON object/map with the following
+         keys.:
+          * service_template_path (required): URL to CSAR
+          * service_template_filename (optional): service template file.
+
+      2. PUT with service template file body.  Content-type must be
+         text/plain.
+
+      3. PUT with binary CSAR body.  Content-type must be application/zip.
+         Optional query string arg "template_filename" can indicate the
+         service template filename in the CSAR.  Defaults to
+         "service-template.yaml".
     """
 
     service_template_path = None
