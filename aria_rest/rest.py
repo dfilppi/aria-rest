@@ -387,7 +387,7 @@ def create_service(template_id, service_name, model_storage, resource_storage,
     """
     body = request.json
     inputs = {}
-    if 'inputs' in body:
+    if body and 'inputs' in body:
         inputs = body['inputs']
     core = Core(model_storage, resource_storage, plugin_manager)
     service = core.create_service(template_id, inputs, service_name)
